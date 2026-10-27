@@ -1,0 +1,61 @@
+# Gerador de carga dentro do cluster: o tráfego não passa pela WAN e a
+# latência medida é a do serviço, não a do Tailscale.
+#
+# A imagem é construída de deploy/k6/Dockerfile. Este Job usa nome fixo. Para
+# rodar de novo, delete antes com `kubectl delete job k6 -n wayposts`.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: k6
+    app.kubernetes.io/part-of: wayposts
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: k6
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        topology.kubernetes.io/region: hel1
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 12345
+        runAsGroup: 12345
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: k6
+          image: ghcr.io/marcioecom/wayposts-k6:dev
+          args: ["run", "/load/steady.js"]
+          env:
+            - name: BASE
+              value: http://gateway:8080
+            - name: USERS
+              value: "20000"
+            - name: CELEBS
+              value: "3"
+            - name: RATE
+              value: "50"
+            - name: DURATION
+              value: "3m"
+            - name: ENFORCE
+              value: "1"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

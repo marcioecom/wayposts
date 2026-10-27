@@ -1,0 +1,441 @@
+# Serviços de aplicação. Todos usam a mesma imagem; o entrypoint escolhe o
+# binário. As senhas vêm de secrets e as URLs são montadas com $(VAR), então a
+# senha do Postgres e do RabbitMQ existe em um único lugar.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: wayposts
+    wayposts.io/metrics: "true"
+spec:
+  selector:
+    app.kubernetes.io/name: gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gateway
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # distroless nonroot expõe o usuário por nome; o kubelet só consegue
+        # validar runAsNonRoot quando o UID é numérico.
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gateway
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/gateway"]
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: post
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: post
+    app.kubernetes.io/part-of: wayposts
+    wayposts.io/metrics: "true"
+spec:
+  selector:
+    app.kubernetes.io/name: post
+  ports:
+    - name: http
+      port: 8081
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: post
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: post
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: post
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # distroless nonroot expõe o usuário por nome; o kubelet só consegue
+        # validar runAsNonRoot quando o UID é numérico.
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: post
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/post"]
+          ports:
+            - name: http
+              containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-db
+                  key: password
+            - name: DATABASE_URL
+              value: postgres://wayposts:$(POSTGRES_PASSWORD)@wayposts-postgres-rw:5432/wayposts?sslmode=require
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-rabbit
+                  key: password
+            - name: RABBIT_URL
+              value: amqp://wayposts:$(RABBIT_PASSWORD)@rabbitmq:5672/
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-s3
+                  key: access-key
+                  optional: true
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-s3
+                  key: secret-key
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 75m
+              memory: 96Mi
+            limits:
+              cpu: "1"
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timeline
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: timeline
+    app.kubernetes.io/part-of: wayposts
+    wayposts.io/metrics: "true"
+spec:
+  selector:
+    app.kubernetes.io/name: timeline
+  ports:
+    - name: http
+      port: 8082
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeline
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: timeline
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: timeline
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: timeline
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # distroless nonroot expõe o usuário por nome; o kubelet só consegue
+        # validar runAsNonRoot quando o UID é numérico.
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: timeline
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/timeline"]
+          ports:
+            - name: http
+              containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 75m
+              memory: 96Mi
+            limits:
+              cpu: "1"
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: social
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: social
+    app.kubernetes.io/part-of: wayposts
+    wayposts.io/metrics: "true"
+spec:
+  selector:
+    app.kubernetes.io/name: social
+  ports:
+    - name: http
+      port: 8083
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: social
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: social
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: social
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # distroless nonroot expõe o usuário por nome; o kubelet só consegue
+        # validar runAsNonRoot quando o UID é numérico.
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: social
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/social"]
+          ports:
+            - name: http
+              containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-db
+                  key: password
+            - name: DATABASE_URL
+              value: postgres://wayposts:$(POSTGRES_PASSWORD)@wayposts-postgres-rw:5432/wayposts?sslmode=require
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 75m
+              memory: 96Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fanout
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: fanout
+    app.kubernetes.io/part-of: wayposts
+    wayposts.io/metrics: "true"
+spec:
+  selector:
+    app.kubernetes.io/name: fanout
+  ports:
+    - name: http
+      port: 8084
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fanout
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: fanout
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fanout
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fanout
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        # distroless nonroot expõe o usuário por nome; o kubelet só consegue
+        # validar runAsNonRoot quando o UID é numérico.
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: fanout
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/fanout"]
+          ports:
+            - name: http
+              containerPort: 8084
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          env:
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-rabbit
+                  key: password
+            - name: RABBIT_URL
+              value: amqp://wayposts:$(RABBIT_PASSWORD)@rabbitmq:5672/
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 75m
+              memory: 96Mi
+            limits:
+              cpu: "1"
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

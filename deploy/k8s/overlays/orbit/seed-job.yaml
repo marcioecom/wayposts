@@ -1,0 +1,71 @@
+# Seed do grafo para o smoke de 1:1000. Rodar este Job apaga os dados atuais,
+# já que -reset=true é o default do binário. Não reaplique com o laboratório em
+# uso.
+#
+# Ajuste os argumentos para a escala do teste. O teto de seguidores precisa
+# ficar abaixo de FANOUT_THRESHOLD para a separação push/merge ser determinística.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wayposts-seed
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: seed
+    app.kubernetes.io/part-of: wayposts
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1800
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seed
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        topology.kubernetes.io/region: hel1
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seed
+          image: ghcr.io/marcioecom/wayposts:dev
+          command: ["/usr/local/bin/seed"]
+          args:
+            - -users
+            - "20000"
+            - -follows
+            - "200"
+            - -celebs
+            - "3"
+            - -celeb-followers
+            - "12000"
+            - -max-followers
+            - "8000"
+          envFrom:
+            - configMapRef:
+                name: wayposts-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-db
+                  key: password
+            - name: DATABASE_URL
+              value: postgres://wayposts:$(POSTGRES_PASSWORD)@wayposts-postgres-rw:5432/wayposts?sslmode=require
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

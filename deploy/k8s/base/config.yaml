@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wayposts-config
+  namespace: wayposts
+data:
+  # Endereços internos: todos resolvem por DNS de Service no namespace.
+  REDIS_ADDR: valkey:6379
+  POST_PUBLIC_URL: http://post:8081
+  TIMELINE_PUBLIC_URL: http://timeline:8082
+  SOCIAL_PUBLIC_URL: http://social:8083
+
+  # Fanout: 16 filas shardadas por author_id. O threshold define quem é
+  # materializado nos feeds e quem é lido no merge (ADR 0001).
+  FANOUT_SHARDS: "16"
+  FANOUT_PREFETCH: "50"
+  FANOUT_THRESHOLD: "10000"
+  FEED_CAP: "500"
+  MAX_CELEBS: "100"
+
+  # Nudge do WebSocket. 30s é o comportamento de produto; no laboratório,
+  # abaixe para 5s para ver o efeito mais rápido.
+  NUDGE_INTERVAL: "30s"
+
+  PG_MAX_CONNS: "20"
+
+  # Mídia desligada por default: com MEDIA_BUCKET vazio o post service sobe
+  # aceitando só texto. Para ligar, aponte para o R2 e crie o secret
+  # wayposts-s3 (ver deploy/k8s/README.md).
+  MEDIA_BUCKET: ""
+  MEDIA_PUBLIC_BASE: ""
+  MEDIA_MAX_BYTES: "10485760"
+  MEDIA_PRESIGN_TTL: "10m"
+  S3_REGION: auto
+  S3_ENDPOINT: ""
+  S3_PATH_STYLE: "false"

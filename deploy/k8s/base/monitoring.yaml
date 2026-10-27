@@ -1,0 +1,59 @@
+# O Prometheus do orbit seleciona ServiceMonitors com o label do release do
+# kube-prometheus-stack. Um ServiceMonitor cobre os cinco serviços porque todos
+# expõem /metrics na porta chamada "http".
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: wayposts
+  namespace: wayposts
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - wayposts
+  selector:
+    matchLabels:
+      wayposts.io/metrics: "true"
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: wayposts
+  namespace: wayposts
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: wayposts.rules
+      rules:
+        - alert: WaypostsHighErrorRate
+          expr: |
+            sum(rate(wayposts_http_requests_total{namespace="wayposts",status=~"5.."}[5m]))
+              /
+            sum(rate(wayposts_http_requests_total{namespace="wayposts"}[5m])) > 0.001
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "wayposts: mais de 0,1% de 5xx"
+            description: "A taxa de 5xx passou do SLO por 5 minutos."
+
+        # O lag é o indicador arquitetural principal: latência HTTP boa com lag
+        # alto significa feed desatualizado.
+        - alert: WaypostsFanoutLagHigh
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le) (rate(wayposts_fanout_lag_seconds_bucket{namespace="wayposts"}[5m]))
+            ) > 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "wayposts: fanout lag p99 acima de 10s"
+            description: "Posts estão demorando para chegar aos feeds; veja shards, prefetch e DLQ."

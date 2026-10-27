@@ -1,0 +1,233 @@
+# Postgres pelo operador CloudNativePG já instalado no orbit.
+# Cluster próprio, com 1 instância e volume de 5Gi. O dataset de 1:1000, com 20k
+# usuários e ~4M arestas, cabe com folga.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: wayposts-postgres
+  namespace: wayposts
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  bootstrap:
+    initdb:
+      database: wayposts
+      owner: wayposts
+      secret:
+        name: wayposts-db
+  storage:
+    # A CRD do CNPG no orbit ainda usa storageClass (não storageClassName).
+    storageClass: hcloud-volumes
+    size: 5Gi
+  monitoring:
+    # O orbit já tem um PodMonitor que cobre todos os clusters CNPG.
+    enablePodMonitor: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/part-of: wayposts
+spec:
+  selector:
+    app.kubernetes.io/name: valkey
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+# Cache sem persistência: perder o Redis perde os feeds materializados (o
+# desenho não reconstrói feed a partir do Postgres). Reinício exige reseed.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valkey
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: valkey
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: valkey
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: valkey
+          image: valkey/valkey:8-alpine
+          args:
+            - valkey-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            - --maxmemory
+            - 256mb
+            - --maxmemory-policy
+            - allkeys-lru
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: wayposts
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: hcloud-volumes
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: wayposts
+spec:
+  selector:
+    app.kubernetes.io/name: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: amqp
+    - name: http
+      port: 15672
+      targetPort: http
+---
+# RabbitMQ de 1 réplica: o fanout é shardado em 16 filas, mas o broker em si
+# não precisa de HA no laboratório. O PVC preserva as filas entre restarts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: wayposts
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: wayposts
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: rabbitmq
+        app.kubernetes.io/part-of: wayposts
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:4-management-alpine
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-rabbit
+                  key: username
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-rabbit
+                  key: password
+            - name: RABBITMQ_ERLANG_COOKIE
+              valueFrom:
+                secretKeyRef:
+                  name: wayposts-rabbit
+                  key: erlang-cookie
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: http
+              containerPort: 15672
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "check_running"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 15
+            failureThreshold: 4
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+          securityContext:
+            allowPrivilegeEscalation: false
+            # O entrypoint roda como root, faz chown do volume e desce para o
+            # usuário rabbitmq via gosu. Dropar todas as capabilities quebra o
+            # chown; mantenha só o necessário para isso e para o setuid.
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "FOWNER", "DAC_OVERRIDE", "SETUID", "SETGID"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rabbitmq
