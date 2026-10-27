@@ -19,7 +19,7 @@ export function LivePill({ traffic, onOpenLive, className = "" }: LivePillProps)
     (sample?.reqPerSec ?? 0) >= 5;
   const rate =
     sample == null
-      ? "—"
+      ? "n/a"
       : new Intl.NumberFormat(locale, {
           maximumFractionDigits:
             sample.reqPerSec > 0 && sample.reqPerSec < 10 ? 1 : 0,

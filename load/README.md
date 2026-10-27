@@ -1,8 +1,8 @@
 # Testes de carga
 
-O harness usa k6 em modelo aberto: a taxa de chegada é fixa e não depende da latência.
-Modelo fechado, com N VUs em loop, esconde o joelho, porque quando o sistema fica lento
-as VUs diminuem a pressão por conta própria. Esse efeito é o *coordinated omission*. Aqui
+O setup de carga usa k6 em modelo aberto. A taxa de chegada é fixa e não depende da
+latência. Modelo fechado, com N VUs em loop, esconde o joelho, porque quando o sistema
+fica lento as VUs diminuem a pressão por conta própria. Esse efeito é o *coordinated omission*. Aqui
 a carga continua chegando mesmo com p99 subindo, que é o que interessa para achar
 saturação.
 

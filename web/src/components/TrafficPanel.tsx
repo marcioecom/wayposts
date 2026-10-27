@@ -59,15 +59,15 @@ export function TrafficPanel({ traffic, apiBase }: TrafficPanelProps) {
 
   const p95 =
     sample?.p95Ms == null
-      ? "—"
+      ? "n/a"
       : `${number(sample.p95Ms, sample.p95Ms < 10 ? 1 : 0)} ms`;
   const errorPct =
     sample == null
-      ? "—"
+      ? "n/a"
       : `${number(sample.errorPct, sample.errorPct > 0 && sample.errorPct < 10 ? 1 : 0)}%`;
   const age =
     traffic.lastSuccessAt == null
-      ? "—"
+      ? "n/a"
       : Math.max(0, Math.round((now - traffic.lastSuccessAt) / 1000)) < 2
         ? t("traffic.justNow")
         : t("traffic.ago", {

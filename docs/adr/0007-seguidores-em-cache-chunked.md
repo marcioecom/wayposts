@@ -19,7 +19,7 @@ podem monopolizar um worker por muito tempo.
   mudança estrutural invalida e reconstrói.
 - O worker processa chunk por chunk, acumulando `ZADD` em pipeline, e só dá `ack` no fim.
 - A origem é uma interface plugável, com implementação direta no Postgres para servir de
-  baseline no mesmo harness de carga.
+  baseline no mesmo setup de carga.
 
 ## Consequências
 

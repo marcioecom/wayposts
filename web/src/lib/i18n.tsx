@@ -62,7 +62,7 @@ const en = {
 
   "empty.homeTitle": "Your home timeline is empty",
   "empty.homeCopy":
-    "Follow an account, then publish from it. Fanout is asynchronous, so new posts arrive a beat later.",
+    "Follow an account, then publish from it. Fanout is asynchronous, so new posts arrive shortly after.",
   "empty.homeCta": "Follow by ID",
   "empty.profileTitle": "No posts from this account",
   "empty.profileCopy": "Publish from this identity or inspect another profile.",
@@ -100,7 +100,7 @@ const en = {
   "identity.openProfile": "Open profile",
   "identity.dialogTitle": "Switch identity",
   "identity.dialogCopy":
-    "Dev auth: the bearer token is the user ID. Seeds run from 1 to 2,000; users 1–3 are celebrities.",
+    "Dev auth uses the bearer token as the user ID. Seeds run from 1 to 2,000. Users 1 to 3 are celebrities.",
   "identity.label": "User ID",
   "identity.use": "Use identity",
   "identity.cancel": "Cancel",
@@ -140,12 +140,12 @@ const en = {
   "traffic.errorHint": "The gateway did not answer {path}.",
   "traffic.retry": "Retry",
   "traffic.idleHint":
-    "No load right now. Start the generator and this panel wakes up.",
+    "No load right now. Start the generator to populate this panel.",
   "traffic.command": "./scripts/load.sh steady",
   "traffic.copy": "Copy command",
   "traffic.copied": "Copied",
   "traffic.note":
-    "Gateway view. /metrics and /healthz are excluded. Fanout lag lives on the fanout service.",
+    "Gateway view. /metrics and /healthz are excluded. Fanout lag is measured on the fanout service.",
   "traffic.justNow": "just now",
   "traffic.ago": "{seconds}s ago",
 
@@ -300,7 +300,7 @@ const pt: Dictionary = {
   "identity.openProfile": "Abrir perfil",
   "identity.dialogTitle": "Trocar identidade",
   "identity.dialogCopy":
-    "Auth de dev: o bearer token é o ID do usuário. O seed vai de 1 a 2.000; usuários 1–3 são celebridades.",
+    "Auth de dev usa o bearer token como ID do usuário. O seed vai de 1 a 2.000. Usuários 1 a 3 são celebridades.",
   "identity.label": "ID do usuário",
   "identity.use": "Usar identidade",
   "identity.cancel": "Cancelar",
@@ -340,7 +340,7 @@ const pt: Dictionary = {
   "traffic.errorHint": "O gateway não respondeu em {path}.",
   "traffic.retry": "Tentar de novo",
   "traffic.idleHint":
-    "Sem carga agora. Inicie o gerador e este painel acorda.",
+    "Sem carga agora. Inicie o gerador para preencher este painel.",
   "traffic.command": "./scripts/load.sh steady",
   "traffic.copy": "Copiar comando",
   "traffic.copied": "Copiado",
@@ -443,8 +443,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
     document.title =
       lang === "pt"
-        ? "Wayposts Lab — um feed social sob carga"
-        : "Wayposts Lab — a social feed under load";
+        ? "Wayposts Lab. Um feed social sob carga"
+        : "Wayposts Lab. A social feed under load";
   }, [lang]);
 
   const setLang = useCallback((next: Lang) => {

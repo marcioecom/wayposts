@@ -146,13 +146,13 @@ under `MEDIA_MAX_BYTES`, 10 MiB by default. Supported types are JPEG, PNG, and W
 Five deployables share Go packages. Postgres is the system of record. Redis serves the
 materialized feed, cached post bodies, likes, and follower chunks. RabbitMQ carries one
 `PostCreated` event per post to the fanout workers. Object storage holds media. The
-optional console in `web/` is outside the fanout path: it calls the gateway over HTTPS
+optional console in `web/` is outside the fanout path. It calls the gateway over HTTPS
 and WebSocket.
 
 The core problem is fanout cost. Pushing a post into every follower's feed costs posts
 times followers, so one post from an account with 10 million followers becomes 10
-million writes. Wayposts splits authors at a threshold: below it, the post is pushed
-into each follower's feed; above it, readers merge the author's recent posts at read
+million writes. Wayposts splits authors at a threshold. Below it, the post is pushed
+into each follower's feed. Above it, readers merge the author's recent posts at read
 time. The lab exists to measure both sides of that split.
 
 ```mermaid
@@ -357,8 +357,8 @@ measurements from one small deployment.
 
 ## Load tests
 
-The harness uses k6 in open model: arrival rate is fixed and independent of latency. A
-closed model hides the knee because slow responses reduce pressure. See
+The load setup uses k6 in open model. Arrival rate is fixed and independent of latency.
+A closed model hides the knee because slow responses reduce pressure. See
 [`load/README.md`](load/README.md) for the full method.
 
 ```sh

@@ -25,7 +25,7 @@ O trilho direito não inventa tráfego. Quando o gerador não está rodando, ele
 `./scripts/load.sh steady` para acordar o painel. O p95 é calculado sobre a janela de
 5 segundos entre coletas; o sparkline guarda os últimos 5 minutos.
 
-A auth é a de desenvolvimento: o bearer token é o ID do usuário. Não use esta
+A auth é a de desenvolvimento. O bearer token é o ID do usuário. Não use esta
 tela como interface de produção.
 
 ## Rodando local

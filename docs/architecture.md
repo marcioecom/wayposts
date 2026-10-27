@@ -157,7 +157,7 @@ e `maxmemory` definido, e o resto cai para o Postgres. TTL sozinho não fecha a 
 | `GET /timeline` | ≤ 150ms | 20 itens, hidratação e merge |
 | `POST/DELETE /likes` | ≤ 100ms | script Lua |
 | Fanout lag | p95 ≤ 2s / p99 ≤ 10s | principal indicador arquitetural |
-| Erros 5xx | < 0,1% | — |
+| Erros 5xx | < 0,1% | não medido |
 | Nudge | ≤ 30s | comportamento de produto |
 
 Saturação é o primeiro patamar em que um SLO quebra por 5 min seguidos ou o erro passa

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# Imagem única com os seis binários. Cada Deployment escolhe o entrypoint.
+# Imagem única com os binários do repositório. Cada workload escolhe o entrypoint.
 # Distroless static: sem shell, sem gerenciador de pacotes, roda como nonroot.
 FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS build
 

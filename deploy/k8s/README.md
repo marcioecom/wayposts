@@ -240,7 +240,7 @@ Grafo: 20.000 usuários, 4.033.532 arestas, 3 celebridades com 12k seguidores. S
 | Cenário | Taxa | Iterações | Erros | p99 total | p99 home | p99 post | Fanout lag p95/p99 |
 |---|---|---|---|---|---|---|---|
 | steady | 50 iters/s por 3m | 9.001 | 0% | 34ms | 43ms | 18ms | 99ms / 218ms |
-| ramp | 50 a 200 iters/s por 3,5m | 28.498 | 0% | 151ms | — | — | — |
+| ramp | 50 a 200 iters/s por 3,5m | 28.498 | 0% | 151ms | n/a | n/a | n/a |
 
 Todos os SLOs do laboratório foram cumpridos no steady. No ramp, `ENFORCE=0` desliga os
 thresholds e o resumo não abre o breakdown por tag, então o p99 agregado de 151ms é a

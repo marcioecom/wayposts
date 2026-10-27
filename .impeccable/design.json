@@ -81,26 +81,77 @@
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Profile names and the largest identity moments." },
-      "headline": { "displayName": "Headline", "purpose": "Page and dialog titles." },
-      "title": { "displayName": "Title", "purpose": "Post authors, section labels, button labels." },
-      "body": { "displayName": "Body", "purpose": "Post copy, prose, composer." },
-      "label": { "displayName": "Label", "purpose": "Field labels, hints, small actions." },
-      "data": { "displayName": "Data", "purpose": "Metrics, IDs, timestamps, commands." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Profile names and the largest identity moments."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page and dialog titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Post authors, section labels, button labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Post copy, prose, composer."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, hints, small actions."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Metrics, IDs, timestamps, commands."
+      }
     },
     "shadows": [],
     "motion": [
-      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Dialog, sheet, toast, and state transitions." },
-      { "name": "ease-in-out", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and color transitions." },
-      { "name": "fast", "value": "140ms", "purpose": "Hover, focus, and small state changes." },
-      { "name": "standard", "value": "200ms", "purpose": "Buttons, tabs, and controls." },
-      { "name": "like-pop", "value": "220ms", "purpose": "The only responsive flourish: a like heart pop." },
-      { "name": "post-wash", "value": "2.6s", "purpose": "A new post's background wash back to white." }
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Dialog, sheet, toast, and state transitions."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Hover and color transitions."
+      },
+      {
+        "name": "fast",
+        "value": "140ms",
+        "purpose": "Hover, focus, and small state changes."
+      },
+      {
+        "name": "standard",
+        "value": "200ms",
+        "purpose": "Buttons, tabs, and controls."
+      },
+      {
+        "name": "like-pop",
+        "value": "220ms",
+        "purpose": "The only responsive flourish: a like heart pop."
+      },
+      {
+        "name": "post-wash",
+        "value": "2.6s",
+        "purpose": "A new post's background wash back to white."
+      }
     ],
     "breakpoints": [
-      { "name": "tablet", "value": "1100px" },
-      { "name": "mobile", "value": "780px" },
-      { "name": "narrow", "value": "520px" }
+      {
+        "name": "tablet",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "780px"
+      },
+      {
+        "name": "narrow",
+        "value": "520px"
+      }
     ]
   },
   "components": [
@@ -155,23 +206,47 @@
   ],
   "narrative": {
     "northStar": "The Feed and the Instrument",
-    "overview": "Wayposts Lab is two materials in one frame. The center is a real social feed: paper-white, quiet, familiar. The right column is the instrument: graphite, dense, exact. The separation is the idea: use the feed, then look right and see the same moment measured in req/s, p95, errors, and in-flight requests. The interface rejects SaaS purple glow, corporate blue dashboards, Matrix terminals, and AI landing pages.",
+    "overview": "Wayposts Lab has two columns with different jobs. The center is a working social feed on white: read, post, like, follow, and switch identity. The right column is graphite and holds live measurements: req/s, p95, errors, in-flight requests, timeline reads, writes, and likes. A visitor can use the feed and, without leaving it, see the same work measured. The interface rejects SaaS purple glow, corporate blue dashboards, Matrix terminals, and AI landing pages.",
     "keyCharacteristics": [
       "Three-column social shell: navigation, feed, instrument rail.",
       "Hairlines instead of cards; one white feed against one graphite rail.",
       "One accent, Signal Vermilion, used for action and selection only.",
       "Archivo for the product; IBM Plex Mono for machine data only.",
       "Flat at rest; depth comes from material and modal backdrop.",
-      "Real telemetry, honest empty states, complete error and loading coverage.",
+      "Real telemetry, useful empty states, complete error and loading coverage.",
       "English and Brazilian Portuguese, persisted per visitor."
     ],
     "rules": [
-      { "name": "The Two Materials Rule", "body": "The feed is white. The instrument is graphite. They never blend, glass over each other, or borrow each other's text colors.", "section": "colors" },
-      { "name": "The One Accent Rule", "body": "Signal Vermilion covers less than 10% of any view. Its rarity is why it reads as action.", "section": "colors" },
-      { "name": "The No Glow Rule", "body": "No gradients on text, no colored glows, no glassmorphism, no decorative shadow.", "section": "colors" },
-      { "name": "The Mono-Is-Machine Rule", "body": "If a human wrote it, it is Archivo. If the system measured it, identified it, or produced it, it is IBM Plex Mono. Mono never appears in a heading, button, or paragraph.", "section": "typography" },
-      { "name": "The Hairline Rule", "body": "If two regions need separation, draw a 1px line. Do not reach for a card, a shadow, or a darker panel unless the region is the instrument rail itself.", "section": "elevation" },
-      { "name": "The Top-Layer Rule", "body": "Only true modal surfaces get to float. Everything else stays in the document flow.", "section": "elevation" }
+      {
+        "name": "The Two Materials Rule",
+        "body": "The feed is white. The instrument is graphite. They never overlap, blend, or borrow each other's text colors.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Accent Rule",
+        "body": "Signal Vermilion covers less than 10% of any view. It marks action, not decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Glow Rule",
+        "body": "No gradients on text, no colored glows, no glassmorphism, no decorative shadow.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono-Is-Machine Rule",
+        "body": "If a human wrote it, it is Archivo. If the system measured it, identified it, or produced it, it is IBM Plex Mono. Mono never appears in a heading, button, or paragraph.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "If two regions need separation, draw a 1px line. Do not reach for a card, a shadow, or a darker panel unless the region is the instrument rail itself.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Top-Layer Rule",
+        "body": "Only true modal surfaces get to float. Everything else stays in the document flow.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do keep the feed white and the instrument rail graphite.",
@@ -180,7 +255,7 @@
       "Do set metrics, IDs, timestamps, and commands in IBM Plex Mono.",
       "Do read real data from /metrics and name the start command when idle.",
       "Do pair every status dot with a text label.",
-      "Do use 12–16px panel radii and pill buttons.",
+      "Do use 12 to 16px panel radii and pill buttons.",
       "Do preserve the 62ch post measure."
     ],
     "donts": [

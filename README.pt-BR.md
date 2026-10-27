@@ -146,12 +146,12 @@ Cinco deployables compartilham pacotes Go. O Postgres é a fonte da verdade. O R
 serve o feed materializado, os corpos de post em cache, os likes e os chunks de
 seguidores. O RabbitMQ leva um evento `PostCreated` por post até os workers de fanout. O
 bucket de objetos guarda mídia. O console opcional em `web/` fica fora do caminho de
-fanout: ele chama o gateway por HTTPS e WebSocket.
+fanout. Ele chama o gateway por HTTPS e WebSocket.
 
 O problema central é o custo de fanout. Empurrar um post para o feed de cada seguidor
 custa posts vezes seguidores, então um post de uma conta com 10 milhões de seguidores
-vira 10 milhões de escritas. O Wayposts divide os autores em um threshold: abaixo dele,
-o post é empurrado para o feed de cada seguidor; acima dele, o leitor faz o merge dos
+vira 10 milhões de escritas. O Wayposts divide os autores em um threshold. Abaixo dele,
+o post é empurrado para o feed de cada seguidor. Acima dele, o leitor faz o merge dos
 posts recentes do autor na leitura. O laboratório existe para medir os dois lados dessa
 divisão.
 
@@ -358,8 +358,8 @@ medições de um deploy pequeno.
 
 ## Testes de carga
 
-O harness usa k6 em modelo aberto: a taxa de chegada é fixa e independente da latência.
-Modelo fechado esconde o joelho porque respostas lentas reduzem a pressão. O método
+O setup de carga usa k6 em modelo aberto. A taxa de chegada é fixa e independente da
+latência. Modelo fechado esconde o joelho porque respostas lentas reduzem a pressão. O método
 completo está em [`load/README.md`](load/README.md).
 
 ```sh
