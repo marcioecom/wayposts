@@ -61,7 +61,13 @@ Em outro terminal:
 make demo      # follows, post comum, post de celebridade, like e as duas timelines
 make nudge     # conexão WebSocket e aviso de post novo
 make media     # presign, upload direto e validação por HEAD no MinIO
+make web-install
+make web-dev   # console em http://localhost:5173
 ```
+
+O diretório `web/` é um console em React para a API. Localmente ele roda no Vite.
+Em produção, roda como assets estáticos no Cloudflare Workers. Veja
+[`web/README.md`](web/README.md).
 
 Encerre os serviços com Ctrl-C no terminal do `make run`. Depois:
 
@@ -139,7 +145,8 @@ precisa existir, estar sob o prefixo do autor, ser imagem e ficar abaixo de
 Cinco deployables compartilham pacotes Go. O Postgres é a fonte da verdade. O Redis
 serve o feed materializado, os corpos de post em cache, os likes e os chunks de
 seguidores. O RabbitMQ leva um evento `PostCreated` por post até os workers de fanout. O
-bucket de objetos guarda mídia.
+bucket de objetos guarda mídia. O console opcional em `web/` fica fora do caminho de
+fanout: ele chama o gateway por HTTPS e WebSocket.
 
 O problema central é o custo de fanout. Empurrar um post para o feed de cada seguidor
 custa posts vezes seguidores, então um post de uma conta com 10 milhões de seguidores
@@ -416,9 +423,18 @@ reaproveitam um operador CloudNativePG e o stack Prometheus existentes, rodam um
 réplica por serviço e incluem Jobs de migration, seed e k6. O runbook está em
 [`deploy/k8s/README.md`](deploy/k8s/README.md).
 
+O deploy do backend roda em [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+verifica, constrói e publica a imagem no GHCR, roda as migrations e aplica o overlay de
+um runner conectado à tailnet. `make k8s-apply` continua como fallback manual.
+
 A fase 1 está planejada para nós temporários na mesma região do gerador de carga, com o
 gerador em uma VPS separada. O gerador não pode dividir nó com os serviços medidos nem
 rodar pela WAN, porque o RTT dominaria o p99.
+
+O console em `web/` tem como alvo o Cloudflare Workers. Ele chama o gateway pelo
+`orbit-eu-tunnel` em `wayposts-api.marcio.run`, com o frontend em
+`wayposts.marcio.run`. Os valores do dashboard, a rota do túnel, o domínio e o CORS
+estão em [`web/README.md`](web/README.md).
 
 ## Desenvolvimento
 
@@ -444,7 +460,8 @@ Layout:
 | `db/migrations/` | Schema SQL, embutido no binário de migration |
 | `load/` | Cenários e helpers k6 |
 | `deploy/` | Imagem k6, base k8s e overlay do orbit |
-| `scripts/` | Runners de dev, demo e carga |
+| `scripts/` | Runners de dev, demo, carga e apply de k8s |
+| `web/` | Console em React para a API, deployado no Cloudflare Workers |
 | `docs/adr/` | Decisões de arquitetura |
 
 Todo serviço expõe `/healthz` e `/metrics`. As métricas usam o prefixo `wayposts_` e
@@ -483,6 +500,8 @@ carregam o label `service`.
   imagem.
 - A fase 0 roda uma réplica por serviço, sem alta disponibilidade.
 - O delete é preguiçoso na leitura. Não há fanout de delete.
+- O console web usa a auth bearer de desenvolvimento. É uma UI de laboratório, não um
+  cliente de produção.
 
 ## Documentação
 
@@ -491,4 +510,5 @@ carregam o label `service`.
 - [Decisões de arquitetura](docs/adr/)
 - [Testes de carga](load/README.md)
 - [Runbook de deploy](deploy/k8s/README.md)
+- [Console web e deploy na Cloudflare](web/README.md)
 - [Fonte do diagrama para blog, Excalidraw](docs/wayposts-architecture.excalidraw)

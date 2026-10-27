@@ -47,8 +47,22 @@ fi
 
 pids=()
 cleanup() {
+  trap - EXIT INT TERM
   if ((${#pids[@]})); then
     kill "${pids[@]}" 2>/dev/null || true
+    # Um serviço pode demorar no shutdown; depois de 2s, força o kill.
+    for _ in {1..20}; do
+      alive=0
+      for pid in "${pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+          alive=1
+          break
+        fi
+      done
+      ((alive)) || break
+      sleep 0.1
+    done
+    kill -9 "${pids[@]}" 2>/dev/null || true
     wait 2>/dev/null || true
   fi
 }

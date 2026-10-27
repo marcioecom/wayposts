@@ -1,4 +1,8 @@
 bin/
 *.out
 .env
+.env.local
 .DS_Store
+web/node_modules/
+web/dist/
+web/.wrangler/

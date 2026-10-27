@@ -61,7 +61,13 @@ In a second terminal:
 make demo      # follows, a regular post, a celebrity post, a like, both timelines
 make nudge     # WebSocket connection plus a new-post notification
 make media     # presign, direct upload, and HEAD validation against MinIO
+make web-install
+make web-dev   # console at http://localhost:5173
 ```
+
+The `web/` directory is a React console for the API. Locally it runs on Vite.
+Production runs it as static assets on Cloudflare Workers. See
+[`web/README.md`](web/README.md).
 
 Stop the services with Ctrl-C in the `make run` terminal. Then:
 
@@ -139,7 +145,9 @@ under `MEDIA_MAX_BYTES`, 10 MiB by default. Supported types are JPEG, PNG, and W
 
 Five deployables share Go packages. Postgres is the system of record. Redis serves the
 materialized feed, cached post bodies, likes, and follower chunks. RabbitMQ carries one
-`PostCreated` event per post to the fanout workers. Object storage holds media.
+`PostCreated` event per post to the fanout workers. Object storage holds media. The
+optional console in `web/` is outside the fanout path: it calls the gateway over HTTPS
+and WebSocket.
 
 The core problem is fanout cost. Pushing a post into every follower's feed costs posts
 times followers, so one post from an account with 10 million followers becomes 10
@@ -414,9 +422,18 @@ reuse an existing CloudNativePG operator and Prometheus stack, run one replica p
 service, and include migration, seed, and k6 Jobs. The runbook is in
 [`deploy/k8s/README.md`](deploy/k8s/README.md).
 
+Backend deploys run in [`.github/workflows/ci.yml`](.github/workflows/ci.yml): verify,
+build and push the image to GHCR, then run migrations and apply the overlay from a
+Tailscale-connected runner. `make k8s-apply` remains the manual fallback.
+
 Phase 1 is planned for temporary nodes in the same region as the load generator, with
 the generator on a separate VPS. The generator must not share a node with the measured
 services and must not run over WAN, because RTT would dominate p99.
+
+The console in `web/` targets Cloudflare Workers. It calls the gateway through the
+`orbit-eu-tunnel` at `wayposts-api.marcio.run`, with the frontend at
+`wayposts.marcio.run`. The dashboard values, tunnel route, custom domain, and CORS
+setting are in [`web/README.md`](web/README.md).
 
 ## Development
 
@@ -441,7 +458,8 @@ Layout:
 | `db/migrations/` | SQL schema, embedded in the migration binary |
 | `load/` | k6 scenarios and helpers |
 | `deploy/` | k6 image, k8s base and orbit overlay |
-| `scripts/` | Local dev, demo, and load runners |
+| `scripts/` | Local dev, demo, load, and k8s apply runners |
+| `web/` | React console for the API, deployed to Cloudflare Workers |
 | `docs/adr/` | Architecture decisions |
 
 Every service exposes `/healthz` and `/metrics`. Metrics share the `wayposts_` prefix
@@ -479,6 +497,7 @@ and carry a `service` label.
 - Media validation trusts the object's `Content-Type`; it does not inspect image bytes.
 - Phase 0 runs one replica per service, with no high availability.
 - Delete is lazy on read. There is no delete fanout.
+- The web console uses the dev bearer auth. It is a lab UI, not a production client.
 
 ## Documentation
 
@@ -489,4 +508,5 @@ Architecture notes and ADRs are written in Portuguese.
 - [Architecture decisions](docs/adr/)
 - [Load tests](load/README.md)
 - [Deploy runbook](deploy/k8s/README.md)
+- [Web console and Cloudflare deploy](web/README.md)
 - [Blog diagram source, Excalidraw](docs/wayposts-architecture.excalidraw)
