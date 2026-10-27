@@ -4,10 +4,11 @@ kind: Kustomization
 resources:
   - ../../base
 
-# A imagem é construída localmente e enviada ao GHCR (ver README).
+# O CI e o script de apply trocam os placeholders pela imagem e pelo SHA.
 images:
   - name: ghcr.io/marcioecom/wayposts
-    newTag: dev
+    newName: ${WAYPOSTS_IMAGE}
+    newTag: ${WAYPOSTS_TAG}
 
 # Todo o stack cabe em um nó só para o smoke de 1:1000. Helsinki é o worker
 # com mais folga de requests (o de Falkenstein está em ~89% de CPU).
@@ -25,19 +26,8 @@ patches:
           spec:
             nodeSelector:
               topology.kubernetes.io/region: hel1
-  - target:
-      kind: Job
-      namespace: wayposts
-    patch: |-
-      apiVersion: batch/v1
-      kind: Job
-      metadata:
-        name: ignored
-      spec:
-        template:
-          spec:
-            nodeSelector:
-              topology.kubernetes.io/region: hel1
+            imagePullSecrets:
+              - name: ghcr-pull-secret
   - target:
       kind: Cluster
       namespace: wayposts

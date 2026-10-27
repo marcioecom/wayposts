@@ -9,5 +9,8 @@ resources:
   - secret.yaml
   - data.yaml
   - apps.yaml
-  - migrate-job.yaml
   - monitoring.yaml
+
+# O Job de migration é aplicado separadamente, antes dos Deployments, pelo
+# workflow e por scripts/k8s-apply.sh. Ele não entra no kustomize para não ser
+# recriado junto com o rollout dos serviços.

@@ -22,6 +22,8 @@ spec:
         app.kubernetes.io/part-of: wayposts
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       nodeSelector:
         topology.kubernetes.io/region: hel1
       securityContext:
@@ -33,6 +35,7 @@ spec:
       containers:
         - name: k6
           image: ghcr.io/marcioecom/wayposts-k6:dev
+          imagePullPolicy: Always
           args: ["run", "/load/steady.js"]
           env:
             - name: BASE

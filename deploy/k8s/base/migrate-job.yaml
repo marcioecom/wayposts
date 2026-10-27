@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/part-of: wayposts
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -28,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: migrate
-          image: ghcr.io/marcioecom/wayposts:dev
+          image: ${WAYPOSTS_IMAGE}:${WAYPOSTS_TAG}
           command: ["/usr/local/bin/migrate"]
           env:
             - name: POSTGRES_PASSWORD

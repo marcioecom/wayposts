@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -47,7 +48,16 @@ func main() {
 	go hub.Run(ctx)
 
 	r := chi.NewRouter()
-	r.Use(m.Middleware, httpapi.Recover(log), httpapi.Logging(log))
+	corsOrigins := strings.Split(
+		env.Get("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"),
+		",",
+	)
+	r.Use(
+		httpapi.CORS(corsOrigins),
+		m.Middleware,
+		httpapi.Recover(log),
+		httpapi.Logging(log),
+	)
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		httpapi.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})

@@ -23,6 +23,8 @@ spec:
         app.kubernetes.io/part-of: wayposts
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       nodeSelector:
         topology.kubernetes.io/region: hel1
       securityContext:
@@ -34,6 +36,7 @@ spec:
       containers:
         - name: seed
           image: ghcr.io/marcioecom/wayposts:dev
+          imagePullPolicy: Always
           command: ["/usr/local/bin/seed"]
           args:
             - -users

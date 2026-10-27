@@ -82,7 +82,7 @@ func main() {
 		go func(queue string, ch *amqp.Channel, deliveries <-chan amqp.Delivery) {
 			defer wg.Done()
 			defer ch.Close()
-			consume(queue, ch, deliveries, worker, m, log, stop)
+			consume(ctx, queue, deliveries, worker, m, log, stop)
 		}(queue, ch, deliveries)
 	}
 
@@ -102,34 +102,38 @@ func main() {
 	wg.Wait()
 }
 
-func consume(queue string, ch *amqp.Channel, deliveries <-chan amqp.Delivery, worker *fanout.Worker, m *metrics.Metrics, log *slog.Logger, stop context.CancelFunc) {
+func consume(ctx context.Context, queue string, deliveries <-chan amqp.Delivery, worker *fanout.Worker, m *metrics.Metrics, log *slog.Logger, stop context.CancelFunc) {
 	for {
-		msg, ok := <-deliveries
-		if !ok {
-			log.Error("consumer encerrado", "queue", queue)
-			stop()
+		select {
+		case <-ctx.Done():
 			return
-		}
+		case msg, ok := <-deliveries:
+			if !ok {
+				log.Error("consumer encerrado", "queue", queue)
+				stop()
+				return
+			}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		err := worker.Handle(ctx, msg.Body)
-		cancel()
+			workCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			err := worker.Handle(workCtx, msg.Body)
+			cancel()
 
-		if err != nil {
-			if !msg.Redelivered {
-				m.FanoutMessages.WithLabelValues("retry").Inc()
-				log.Warn("fanout retry", "queue", queue, "err", err)
-				_ = msg.Nack(false, true)
+			if err != nil {
+				if !msg.Redelivered {
+					m.FanoutMessages.WithLabelValues("retry").Inc()
+					log.Warn("fanout retry", "queue", queue, "err", err)
+					_ = msg.Nack(false, true)
+					continue
+				}
+				m.FanoutMessages.WithLabelValues("dlq").Inc()
+				log.Error("fanout para DLQ", "queue", queue, "err", err)
+				_ = msg.Nack(false, false)
 				continue
 			}
-			m.FanoutMessages.WithLabelValues("dlq").Inc()
-			log.Error("fanout para DLQ", "queue", queue, "err", err)
-			_ = msg.Nack(false, false)
-			continue
-		}
-		m.FanoutMessages.WithLabelValues("ok").Inc()
-		if err := msg.Ack(false); err != nil {
-			log.Error("ack", "queue", queue, "err", err)
+			m.FanoutMessages.WithLabelValues("ok").Inc()
+			if err := msg.Ack(false); err != nil {
+				log.Error("ack", "queue", queue, "err", err)
+			}
 		}
 	}
 }

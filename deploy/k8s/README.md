@@ -4,6 +4,35 @@ Manifests para o smoke de 1:1000 no k3s do orbit. O objetivo aqui é validar dep
 contrato, métricas e pipeline de dados, não tirar conclusão de capacidade. A curva de
 saturação é a fase 1, em nós temporários.
 
+## Deploy normal: GitHub Actions
+
+O deploy dos microserviços roda em [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
+Em push para `main` ou `workflow_dispatch`, o workflow:
+
+1. roda `gofmt`, `go vet`, `go test`, `go build` e o build do console em `web/`;
+2. constrói a imagem `ghcr.io/<owner>/wayposts` e publica as tags do SHA e `dev`;
+3. entra na tailnet, configura o kubeconfig e chama
+   [`scripts/k8s-apply.sh`](../../scripts/k8s-apply.sh);
+4. o script espera o Postgres, roda a migration, aplica o overlay com a imagem do SHA e
+   espera o rollout dos cinco Deployments.
+
+Segredos necessários no repositório:
+
+| Secret | Uso |
+|---|---|
+| `TS_OAUTH_CLIENT_ID` | OAuth client do Tailscale com a tag `tag:ci` |
+| `TS_OAUTH_CLIENT_SECRET` | Secret do mesmo OAuth client |
+| `KUBECONFIG_BASE64` | kubeconfig do cluster, codificado em base64 |
+
+O `GITHUB_TOKEN` é automático e cobre o push no GHCR. O pacote pode continuar privado.
+
+O `ghcr-pull-secret` já existe no namespace `echo` e foi replicado para `wayposts`. O
+workflow não cria esse secret: ele falha cedo se o secret não estiver no namespace. Em um
+cluster novo, copie-o do Echo antes do primeiro deploy.
+
+O workflow só faz deploy de `main` ou de um `workflow_dispatch`. Pull requests rodam
+apenas a verificação, sem tocar no cluster.
+
 ## O que sobe
 
 | Componente | Origem | Observação |
@@ -22,7 +51,9 @@ overlay troca a região em um patch; para outro nó, ajuste
 Requests totais do stack: ~675m de CPU e ~950Mi de memória. Os limits deixam burst, mas
 o nó não tem folga para réplicas extras.
 
-## 1. Imagens
+## 1. Build manual (fallback)
+
+O caminho normal é o workflow. Para construir e publicar manualmente:
 
 ```sh
 # da raiz do repositório
@@ -57,18 +88,56 @@ kubectl -n wayposts rollout restart deploy/gateway deploy/post deploy/timeline d
 Se um pod for agendado em outro nó sem a imagem, importe lá também, ou torne o pacote
 público, ou crie um pull secret com acesso a ele.
 
-## 2. Aplicar
+Independente do caminho, o secret `ghcr-pull-secret` precisa existir no namespace,
+porque o overlay o referencia em todos os Deployments e Jobs. A seção 2 mostra como
+replicá-lo.
+
+## 2. Apply manual (fallback)
+
+Use o mesmo script do workflow. Ele espera o Postgres, roda a migration antes do rollout
+e aplica o overlay com a imagem escolhida:
 
 ```sh
-kubectl apply -k deploy/k8s/overlays/orbit
-
-kubectl -n wayposts wait --for=condition=Ready cluster/wayposts-postgres --timeout=10m
-kubectl -n wayposts wait --for=condition=complete job/wayposts-migrate --timeout=5m
-kubectl -n wayposts get pods
+make k8s-apply
 ```
 
-O Job de migration roda junto com os serviços. Se algum pod responder 500 nos primeiros
-segundos, é porque o schema ainda não existia; espere o Job terminar.
+Ou com uma imagem e tag explícitas:
+
+```sh
+WAYPOSTS_IMAGE=ghcr.io/marcioecom/wayposts \
+WAYPOSTS_TAG=dev \
+./scripts/k8s-apply.sh
+```
+
+O script aplica o namespace, exige o `ghcr-pull-secret`, espera o Postgres, recria e
+espera o Job de migration, aplica o overlay e espera o rollout dos cinco Deployments.
+
+O `ghcr-pull-secret` já está no cluster. Para recriá-lo em um namespace novo, copie o
+secret que funciona no Echo:
+
+```sh
+kubectl -n echo get secret ghcr-pull-secret -o json \
+  | python3 -c 'import sys,json; d=json.load(sys.stdin); d["metadata"]={"name": d["metadata"]["name"]}; print(json.dumps(d))' \
+  | kubectl -n wayposts apply -f -
+```
+
+O secret copiado funciona se o PAT tiver `read:packages` para o pacote `wayposts`. Se o
+token for restrito ao pacote do Echo, gere outro com acesso ao pacote do Wayposts. Se o
+token rotacionar, atualize os dois namespaces.
+
+Alternativamente, crie com um PAT que tenha `read:packages`:
+
+```sh
+kubectl -n wayposts create secret docker-registry ghcr-pull-secret \
+  --docker-server=ghcr.io \
+  --docker-username=marcioecom \
+  --docker-password="$GHCR_PULL_TOKEN" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+O overlay usa `${WAYPOSTS_IMAGE}` e `${WAYPOSTS_TAG}`. Não rode `kubectl apply -k`
+diretamente, porque os placeholders chegariam sem substituição. O script faz o render
+com `kubectl kustomize` antes do apply.
 
 ## 3. Seed
 
@@ -142,6 +211,26 @@ kubectl -n wayposts exec deploy/valkey -- valkey-cli FLUSHDB
 kubectl delete -k deploy/k8s/overlays/orbit
 kubectl -n wayposts delete pvc rabbitmq wayposts-postgres-1
 ```
+
+## 8. Frontend (Cloudflare)
+
+O console visual fica em `web/` e roda no Cloudflare Workers, fora do cluster. Ele
+chama o gateway pelo túnel:
+
+| Peça | Valor |
+|---|---|
+| Frontend | `https://wayposts.marcio.run` |
+| API | `https://wayposts-api.marcio.run` |
+| Rota do túnel | `http://gateway.wayposts.svc.cluster.local:8080` |
+| Build variable | `VITE_API_URL=https://wayposts-api.marcio.run` |
+
+No Workers Builds, use `web` como root directory, `npm ci && npm run build` como
+build command e `npx wrangler deploy` como deploy command. O passo a passo do
+dashboard, o DNS e o Pulumi opcional estão em [`web/README.md`](../../web/README.md).
+
+O gateway libera o domínio do console em `CORS_ALLOWED_ORIGINS`, no
+`base/config.yaml`. Depois de mudar o domínio, reaplique o overlay e reinicie o
+Deployment do gateway.
 
 ## Resultado do smoke em 27/10/2026
 
