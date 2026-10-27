@@ -25,6 +25,14 @@ rompe sob carga. Não é um produto.
 Fora de escopo: respostas, reposts, busca, hashtags, DMs, notificações persistidas,
 ranking, moderação e apps mobile.
 
+![Console do Wayposts com Home Timeline, composer, trilho de métricas ao vivo do gateway e status do nudge](web/docs/console.pt-BR.png)
+
+O console em `web/` é o cliente visual da API. Ele mostra a home timeline, escritas,
+likes, follows, perfis e o indicador de nudge em tempo real. O trilho direito lê o
+`/metrics` do gateway a cada 5 segundos e mostra taxa de requisições, p95, erros,
+requisições em andamento, leituras de timeline, escritas e likes. A interface está
+disponível em inglês e português do Brasil.
+
 ## Início rápido
 
 Pré-requisitos: Go 1.26+ e Docker 28+ com Compose v2. O `go.mod` baixa o toolchain
@@ -454,6 +462,7 @@ carregam o label `service`.
 | Objetos | Cloudflare R2, compatível com S3 | Upload assinado e CDN pública |
 | Métricas | Prometheus e Grafana | Já disponíveis no cluster |
 | Carga | k6 em modelo aberto e seeder em Go | Taxa de chegada independente da latência |
+| Web | React 19, Vite e Cloudflare Workers | Console visual de timelines, escritas e métricas ao vivo do gateway |
 
 ## Limites conhecidos
 

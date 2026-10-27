@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T19:30:00.000Z",
+  "title": "Design System: Wayposts Lab",
+  "extensions": {
+    "colorMeta": {
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal Vermilion",
+        "canonical": "oklch(0.55 0.17 35)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 35)",
+          "oklch(0.25 0.17 35)",
+          "oklch(0.35 0.17 35)",
+          "oklch(0.45 0.17 35)",
+          "oklch(0.55 0.17 35)",
+          "oklch(0.65 0.16 35)",
+          "oklch(0.78 0.1 35)",
+          "oklch(0.92 0.04 35)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Chalk Canvas",
+        "canonical": "oklch(0.972 0.002 25)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 25)",
+          "oklch(0.28 0.003 25)",
+          "oklch(0.42 0.003 25)",
+          "oklch(0.58 0.003 25)",
+          "oklch(0.72 0.003 25)",
+          "oklch(0.84 0.003 25)",
+          "oklch(0.93 0.002 25)",
+          "oklch(0.985 0.002 25)"
+        ]
+      },
+      "graphite": {
+        "role": "secondary",
+        "displayName": "Instrument Graphite",
+        "canonical": "oklch(0.19 0.008 25)",
+        "tonalRamp": [
+          "oklch(0.12 0.008 25)",
+          "oklch(0.19 0.008 25)",
+          "oklch(0.235 0.009 25)",
+          "oklch(0.31 0.008 25)",
+          "oklch(0.45 0.008 25)",
+          "oklch(0.62 0.008 25)",
+          "oklch(0.78 0.006 25)",
+          "oklch(0.95 0.004 25)"
+        ]
+      },
+      "graphite-signal": {
+        "role": "secondary",
+        "displayName": "Graphite Signal",
+        "canonical": "oklch(0.74 0.15 38)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 38)",
+          "oklch(0.28 0.15 38)",
+          "oklch(0.42 0.15 38)",
+          "oklch(0.55 0.15 38)",
+          "oklch(0.68 0.15 38)",
+          "oklch(0.74 0.15 38)",
+          "oklch(0.86 0.09 38)",
+          "oklch(0.95 0.04 38)"
+        ]
+      },
+      "live": {
+        "role": "tertiary",
+        "displayName": "Live Green",
+        "canonical": "oklch(0.46 0.12 155)",
+        "tonalRamp": [
+          "oklch(0.18 0.12 155)",
+          "oklch(0.3 0.12 155)",
+          "oklch(0.46 0.12 155)",
+          "oklch(0.58 0.12 155)",
+          "oklch(0.68 0.12 155)",
+          "oklch(0.75 0.14 155)",
+          "oklch(0.86 0.08 155)",
+          "oklch(0.95 0.03 155)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Profile names and the largest identity moments." },
+      "headline": { "displayName": "Headline", "purpose": "Page and dialog titles." },
+      "title": { "displayName": "Title", "purpose": "Post authors, section labels, button labels." },
+      "body": { "displayName": "Body", "purpose": "Post copy, prose, composer." },
+      "label": { "displayName": "Label", "purpose": "Field labels, hints, small actions." },
+      "data": { "displayName": "Data", "purpose": "Metrics, IDs, timestamps, commands." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Dialog, sheet, toast, and state transitions." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and color transitions." },
+      { "name": "fast", "value": "140ms", "purpose": "Hover, focus, and small state changes." },
+      { "name": "standard", "value": "200ms", "purpose": "Buttons, tabs, and controls." },
+      { "name": "like-pop", "value": "220ms", "purpose": "The only responsive flourish: a like heart pop." },
+      { "name": "post-wash", "value": "2.6s", "purpose": "A new post's background wash back to white." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "1100px" },
+      { "name": "mobile", "value": "780px" },
+      { "name": "narrow", "value": "520px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single action color. Used for Publish, Follow, and Use identity.",
+      "html": "<button class=\"ds-btn-primary\"><span>Publish</span></button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 1px solid var(--accent); border-radius: 999px; background: var(--accent); color: #fff; font-family: var(--font-sans); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1), border-color 140ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral action for retry, dismiss, unfollow, and cancel.",
+      "html": "<button class=\"ds-btn-secondary\">Retry</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink); font-family: var(--font-sans); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; transition: background 140ms ease, border-color 140ms ease; } .ds-btn-secondary:hover { border-color: var(--faint); background: var(--hover); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Active Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "The left-rail active state. A wash pill, never a left stripe.",
+      "html": "<button class=\"ds-nav-item\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 10.8 12 3.6l8.5 7.2\"/><path d=\"M5.6 9.4V20h12.8V9.4\"/><path d=\"M9.8 20v-5.4h4.4V20\"/></svg><span>Home</span></button>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 12px; width: 100%; height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-family: var(--font-sans); font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; } .ds-nav-item svg { flex: 0 0 auto; } .ds-nav-item:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Identity and follow fields. White on light, graphite on dark sheets.",
+      "html": "<label class=\"ds-field\"><span>User ID</span><input class=\"ds-input\" value=\"10\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 5px; width: 240px; } .ds-field span { color: var(--muted); font-family: var(--font-sans); font-size: 11px; font-weight: 600; } .ds-input { width: 100%; height: 38px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: 10px; outline: none; background: var(--surface); color: var(--ink); font-family: var(--font-sans); font-size: 13px; } .ds-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }"
+    },
+    {
+      "name": "Live Rate Pill",
+      "kind": "custom",
+      "refersTo": "live-pill",
+      "description": "The compact health reading in the top bar and feed header.",
+      "html": "<button class=\"ds-live-pill\"><span class=\"ds-dot\"></span><span>1,788 req/s</span></button>",
+      "css": ".ds-live-pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--accent-line); border-radius: 999px; background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 10px; cursor: pointer; } .ds-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); } .ds-live-pill:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Instrument Traffic Panel",
+      "kind": "custom",
+      "refersTo": "traffic-panel",
+      "description": "The signature graphite panel. One large rate, one sparkline, six mono metrics.",
+      "html": "<section class=\"ds-traffic\"><header class=\"ds-traffic-head\"><span>Gateway load <em>metrics</em></span><span class=\"ds-state\">live</span></header><div class=\"ds-hero\"><strong>1,788</strong><span>req/s</span></div><svg class=\"ds-spark\" viewBox=\"0 0 260 56\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path d=\"M4 50 L60 44 L120 38 L180 22 L256 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><dl class=\"ds-grid\"><div><dt>p95</dt><dd>75 ms</dd></div><div><dt>5xx</dt><dd>0%</dd></div><div><dt>in flight</dt><dd>67</dd></div><div><dt>timeline reads/s</dt><dd>1,776</dd></div></dl></section>",
+      "css": ".ds-traffic { width: 312px; padding: 14px; border: 1px solid var(--rail-line); border-radius: 12px; background: var(--rail-surface); color: var(--rail-ink); font-family: var(--font-sans); } .ds-traffic-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 600; } .ds-traffic-head em { color: var(--rail-faint); font-family: var(--font-mono); font-size: 9px; font-style: normal; } .ds-state { color: var(--rail-ok); font-size: 10px; font-weight: 600; } .ds-hero { display: flex; align-items: baseline; gap: 7px; margin-top: 10px; } .ds-hero strong { font-family: var(--font-mono); font-size: 38px; font-weight: 500; letter-spacing: -0.02em; line-height: 0.95; } .ds-hero span { color: var(--rail-muted); font-size: 11px; } .ds-spark { display: block; width: 100%; height: 56px; margin-top: 8px; color: var(--rail-accent); } .ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--rail-line); } .ds-grid dt { color: var(--rail-faint); font-size: 10px; } .ds-grid dd { margin: 2px 0 0; color: var(--rail-ink); font-family: var(--font-mono); font-size: 13px; font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Feed and the Instrument",
+    "overview": "Wayposts Lab is two materials in one frame. The center is a real social feed: paper-white, quiet, familiar. The right column is the instrument: graphite, dense, exact. The separation is the idea: use the feed, then look right and see the same moment measured in req/s, p95, errors, and in-flight requests. The interface rejects SaaS purple glow, corporate blue dashboards, Matrix terminals, and AI landing pages.",
+    "keyCharacteristics": [
+      "Three-column social shell: navigation, feed, instrument rail.",
+      "Hairlines instead of cards; one white feed against one graphite rail.",
+      "One accent, Signal Vermilion, used for action and selection only.",
+      "Archivo for the product; IBM Plex Mono for machine data only.",
+      "Flat at rest; depth comes from material and modal backdrop.",
+      "Real telemetry, honest empty states, complete error and loading coverage.",
+      "English and Brazilian Portuguese, persisted per visitor."
+    ],
+    "rules": [
+      { "name": "The Two Materials Rule", "body": "The feed is white. The instrument is graphite. They never blend, glass over each other, or borrow each other's text colors.", "section": "colors" },
+      { "name": "The One Accent Rule", "body": "Signal Vermilion covers less than 10% of any view. Its rarity is why it reads as action.", "section": "colors" },
+      { "name": "The No Glow Rule", "body": "No gradients on text, no colored glows, no glassmorphism, no decorative shadow.", "section": "colors" },
+      { "name": "The Mono-Is-Machine Rule", "body": "If a human wrote it, it is Archivo. If the system measured it, identified it, or produced it, it is IBM Plex Mono. Mono never appears in a heading, button, or paragraph.", "section": "typography" },
+      { "name": "The Hairline Rule", "body": "If two regions need separation, draw a 1px line. Do not reach for a card, a shadow, or a darker panel unless the region is the instrument rail itself.", "section": "elevation" },
+      { "name": "The Top-Layer Rule", "body": "Only true modal surfaces get to float. Everything else stays in the document flow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the feed white and the instrument rail graphite.",
+      "Do separate feed items with 1px hairlines, not cards.",
+      "Do use Signal Vermilion for action and selection, under 10% of any view.",
+      "Do set metrics, IDs, timestamps, and commands in IBM Plex Mono.",
+      "Do read real data from /metrics and name the start command when idle.",
+      "Do pair every status dot with a text label.",
+      "Do use 12–16px panel radii and pill buttons.",
+      "Do preserve the 62ch post measure."
+    ],
+    "donts": [
+      "Don't use SaaS purple with glow.",
+      "Don't build a corporate blue dashboard.",
+      "Don't build a Matrix terminal.",
+      "Don't build an AI landing page.",
+      "Don't pair a 1px border with a wide decorative shadow.",
+      "Don't use card radii above 16px or nested cards.",
+      "Don't use colored side stripes, gradient text, glassmorphism, or striped backgrounds.",
+      "Don't invent traffic, fake a p95, or use mono for prose."
+    ]
+  }
+}

@@ -25,6 +25,14 @@ not a product.
 Out of scope: replies, reposts, search, hashtags, DMs, persisted notifications,
 ranking, moderation, and mobile apps.
 
+![Wayposts console showing a home timeline, composer, a live gateway metrics rail, and nudge status](web/docs/console.png)
+
+The console in `web/` is the visual client for the API. It shows the home timeline,
+writes, likes, follows, profiles, and the live nudge indicator. The right rail reads
+the gateway's `/metrics` every 5 seconds and shows real request rate, p95, errors,
+in-flight requests, timeline reads, writes, and likes. The interface is available in
+English and Brazilian Portuguese.
+
 ## Quick start
 
 Prerequisites: Go 1.26+ and Docker 28+ with Compose v2. The `go.mod` downloads the
@@ -451,6 +459,7 @@ and carry a `service` label.
 | Objects | Cloudflare R2, S3 compatible | Presigned uploads and a public CDN |
 | Metrics | Prometheus and Grafana | Already available in the cluster |
 | Load | k6 open model and a Go seeder | Arrival rate independent of latency |
+| Web | React 19, Vite, Cloudflare Workers | Visual console for timelines, writes, and live gateway metrics |
 
 ## Known limits
 
