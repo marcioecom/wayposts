@@ -1,3 +1,9 @@
+export interface AuthorSummary {
+  id: number;
+  handle: string;
+  display_name: string;
+}
+
 export interface Post {
   id: number;
   author_id: number;
@@ -7,6 +13,8 @@ export interface Post {
   deleted: boolean;
   like_count: number;
   viewer_liked: boolean;
+  // Preenchido pela timeline. Pode faltar se o autor não puder ser resolvido.
+  author?: AuthorSummary;
 }
 
 export interface User {

@@ -63,6 +63,7 @@ func main() {
 
 	r.Get("/internal/followers/{id}", handler.Followers)
 	r.Get("/internal/followers/{id}/count", handler.FollowerCount)
+	r.Get("/internal/users", handler.Users)
 
 	if err := httpapi.Serve(ctx, addr, r, log); err != nil {
 		log.Error("serve", "err", err)

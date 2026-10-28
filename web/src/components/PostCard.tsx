@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Post, User } from "../types";
+import type { Post } from "../types";
 import { useI18n } from "../lib/i18n";
 import { avatarTone, initials } from "../lib/initials";
 import { fullTime, relativeTime } from "../lib/time";
@@ -8,7 +8,6 @@ import { HeartIcon, TrashIcon, UserIcon } from "./icons";
 interface PostCardProps {
   post: Post;
   currentUserId: number;
-  author: User | undefined;
   highlighted?: boolean;
   onLike: (post: Post) => Promise<void>;
   onDelete: (post: Post) => Promise<void>;
@@ -22,7 +21,6 @@ function httpMedia(media: string[]): string[] {
 export function PostCard({
   post,
   currentUserId,
-  author,
   highlighted = false,
   onLike,
   onDelete,
@@ -33,8 +31,9 @@ export function PostCard({
   const [deleting, setDeleting] = useState(false);
   const own = post.author_id === currentUserId;
   const media = httpMedia(post.media);
-  const handle = author?.handle ?? String(post.author_id);
-  const name = author?.display_name ?? `User ${post.author_id}`;
+  const author = post.author;
+  const handle = author?.handle?.trim() || String(post.author_id);
+  const name = author?.display_name?.trim() || `User ${post.author_id}`;
 
   async function like() {
     setLiking(true);

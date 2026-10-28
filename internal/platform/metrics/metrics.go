@@ -40,6 +40,7 @@ type Metrics struct {
 	MediaValidation *prometheus.CounterVec
 
 	FollowerCache *prometheus.CounterVec
+	UserCache     *prometheus.CounterVec
 }
 
 func New(service string) *Metrics {
@@ -129,6 +130,10 @@ func New(service string) *Metrics {
 			Name: "wayposts_follower_cache_total",
 			Help: "Leituras de seguidores por resultado.",
 		}, []string{"result"}),
+		UserCache: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "wayposts_user_cache_total",
+			Help: "Resumos de autor lidos do cache, contados por id.",
+		}, []string{"result"}),
 	}
 
 	reg := prometheus.WrapRegistererWith(prometheus.Labels{"service": service}, m.registry)
@@ -153,6 +158,7 @@ func New(service string) *Metrics {
 		m.MediaPresign,
 		m.MediaValidation,
 		m.FollowerCache,
+		m.UserCache,
 	)
 	// Registra uma série por label para o primeiro scrape já mostrar a métrica.
 	m.HTTPRequests.WithLabelValues("GET", "/healthz", "200").Add(0)
@@ -176,6 +182,10 @@ func New(service string) *Metrics {
 	m.FollowerCache.WithLabelValues("rebuild").Add(0)
 	m.FollowerCache.WithLabelValues("stale_retry").Add(0)
 	m.FollowerCache.WithLabelValues("error").Add(0)
+	m.UserCache.WithLabelValues("hit").Add(0)
+	m.UserCache.WithLabelValues("miss").Add(0)
+	m.UserCache.WithLabelValues("absent").Add(0)
+	m.UserCache.WithLabelValues("redis_error").Add(0)
 
 	return m
 }

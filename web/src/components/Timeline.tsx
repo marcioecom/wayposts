@@ -1,4 +1,4 @@
-import type { Post, User } from "../types";
+import type { Post } from "../types";
 import { useI18n } from "../lib/i18n";
 import { InboxIcon } from "./icons";
 import { PostCard } from "./PostCard";
@@ -6,7 +6,6 @@ import { PostCard } from "./PostCard";
 interface TimelineProps {
   tab: "home" | "profile";
   items: Post[];
-  users: Record<number, User>;
   currentUserId: number;
   loading: boolean;
   loadingMore: boolean;
@@ -38,7 +37,6 @@ function Skeleton() {
 export function Timeline({
   tab,
   items,
-  users,
   currentUserId,
   loading,
   loadingMore,
@@ -88,7 +86,6 @@ export function Timeline({
           key={post.id}
           post={post}
           currentUserId={currentUserId}
-          author={users[post.author_id]}
           highlighted={post.id === highlightedPostId}
           onLike={onLike}
           onDelete={onDelete}

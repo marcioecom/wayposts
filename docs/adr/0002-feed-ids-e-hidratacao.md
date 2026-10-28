@@ -20,6 +20,9 @@ estável, do mais recente para o mais antigo, e paginação por cursor.
   dariam ~1,4 TB.
 - Hidratação: `ZREVRANGEBYSCORE` para 20 IDs, pipeline de `HGETALL`, misses em lote no
   Postgres. Posts deletados são pulados e removidos do feed de forma preguiçosa.
+- Autoria: a timeline chama `GET /internal/users?ids=` no `social` uma vez por página e
+  cacheia `user:{id}` com TTL de 10min. O prazo é 100ms; sem resposta, o post vai sem
+  autor e o cliente usa o `author_id`.
 - `author:{user}`: ZSET com os últimos 200 posts do autor. Serve a Profile Timeline, o
   merge do próprio autor, para read-your-writes, e o merge de celebridades.
 - `celeb_follows:{user}`: ZSET de celebridade para `follow_at`. Lista o que puxar no
@@ -32,6 +35,8 @@ estável, do mais recente para o mais antigo, e paginação por cursor.
 - Memória previsível: 20M usuários × 500 entradas × ~32 bytes ≈ 300 GB de RAM, ~120 GB
   com cap 200. O cap é variável de experimento.
 - Read path paga N+1 controlado, com 20 hidratações, e depende da taxa de hit do cache.
+- A autoria adiciona um hop para o `social`, amortecido pelo cache de `user:{id}` e por
+  um prazo que não consome o orçamento da rota.
 - Corpo com TTL menor que o feed exige fallback ao Postgres e um caminho de miss que
   precisa ser medido, não assumido.
 - Cap fixo faz usuário inativo perder o histórico do feed. Ao voltar, ele vê os últimos

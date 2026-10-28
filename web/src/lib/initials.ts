@@ -1,6 +1,6 @@
-import type { User } from "../types";
+type Named = { handle?: string };
 
-export function initials(user: User | null | undefined, id: number): string {
+export function initials(user: Named | null | undefined, id: number): string {
   const handle = user?.handle?.trim();
   if (handle) {
     const seeded = /^u(\d+)$/i.exec(handle);

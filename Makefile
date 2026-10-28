@@ -44,7 +44,7 @@ test:
 	go test ./...
 
 test-integration:
-	TEST_DATABASE_URL="$(DATABASE_URL)" go test ./internal/social/ -run TestFollowerCacheAgainstPostgres -v
+	TEST_DATABASE_URL="$(DATABASE_URL)" go test ./internal/social/ -run 'TestFollowerCacheAgainstPostgres|TestUsersBatchCacheAndFallback' -v
 
 vet:
 	go vet ./...

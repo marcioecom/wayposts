@@ -35,7 +35,7 @@ timeline e frescor.
 |---|---|---|
 | `gateway` | REST, auth JWT, rate limit, WebSocket e nudge | nada, stateless |
 | `post` | criar/ler/deletar post, presign de mídia, likes, outbox | Postgres `post`; Redis `post:{id}`, `author:{u}`, `likes:{post}` |
-| `timeline` | Home Timeline, Profile Timeline, merge e hidratação | Redis `feed:{u}` |
+| `timeline` | Home Timeline, Profile Timeline, merge e hidratação | Redis `feed:{u}`; lê `user:{id}` via `social` |
 | `social` | usuários, follow/unfollow, contagem e chunks de seguidores | Postgres `social`; Redis `followers:{author}:{chunk}`, `celeb_follows:{u}` |
 | `fanout-worker` | consumir `PostCreated` e materializar o feed | nada; usa o mesmo código do `timeline` |
 
@@ -83,7 +83,10 @@ cliente → gateway → timeline
   5. hidrata em pipeline: HGETALL post:{id} + SMISMEMBER likes:{id} {u}
      miss → post.GetPosts(ids) em lote
      deleted → pula e remove do feed preguiçosamente
-  6. devolve 20 itens + cursor (último postID)
+  6. hidrata autores em uma chamada: GET /internal/users?ids=...
+     cache user:{id} com TTL de 10min; autor ausente fica marcado por 30s
+     timeout de 100ms → post sai sem autor e o cliente usa o author_id
+  7. devolve 20 itens + cursor (último postID)
 ```
 
 ### 3.4 Like

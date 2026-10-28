@@ -62,8 +62,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
-  const [users, setUsers] = useState<Record<number, User>>({});
-  const requestedUsers = useRef(new Set<number>());
   const lastSeenRef = useRef(0);
 
   const [nudge, setNudge] = useState<{ count: number; head: number } | null>(null);
@@ -111,7 +109,6 @@ export default function App() {
       .then((user) => {
         if (cancelled) return;
         setCurrentUser(user);
-        setUsers((prev) => ({ ...prev, [user.id]: user }));
       })
       .catch((cause) => {
         if (!cancelled) {
@@ -144,7 +141,6 @@ export default function App() {
       .then((user) => {
         if (cancelled) return;
         setProfileUser(user);
-        setUsers((prev) => ({ ...prev, [user.id]: user }));
       })
       .catch((cause) => {
         if (cancelled) return;
@@ -158,23 +154,6 @@ export default function App() {
       cancelled = true;
     };
   }, [tab, profileUserId, currentUserId, refreshNonce]);
-
-  useEffect(() => {
-    const ids = new Set<number>([currentUserId, profileUserId]);
-    for (const item of timeline.items) ids.add(item.author_id);
-
-    for (const id of ids) {
-      if (users[id] || requestedUsers.current.has(id)) continue;
-      requestedUsers.current.add(id);
-      api
-        .getUser(currentUserId, id)
-        .then((user) => setUsers((prev) => ({ ...prev, [user.id]: user })))
-        .catch(() => {
-          // Author details are decorative. The post still renders with the ID.
-        })
-        .finally(() => requestedUsers.current.delete(id));
-    }
-  }, [currentUserId, profileUserId, timeline.items, users]);
 
   const fetchPage = useCallback(
     (before: number) => {
@@ -399,9 +378,21 @@ export default function App() {
       setCreating(true);
       try {
         const created = await api.createPost(currentUserId, body);
+        // O POST devolve o post sem autor; usa o usuário carregado para exibir
+        // nome e handle.
+        const author =
+          created.author ??
+          (currentUser
+            ? {
+                id: currentUser.id,
+                handle: currentUser.handle,
+                display_name: currentUser.display_name,
+              }
+            : undefined);
+        const item = author ? { ...created, author } : created;
         setTimeline((prev) => ({
           ...prev,
-          items: [created, ...prev.items.filter((item) => item.id !== created.id)],
+          items: [item, ...prev.items.filter((existing) => existing.id !== item.id)],
         }));
         setTab("home");
         markHighlight(created.id);
@@ -414,7 +405,7 @@ export default function App() {
         setCreating(false);
       }
     },
-    [currentUserId, markHighlight, notify, t],
+    [currentUser, currentUserId, markHighlight, notify, t],
   );
 
   const handleLike = useCallback(
@@ -619,7 +610,6 @@ export default function App() {
             <Timeline
               tab={tab}
               items={timeline.items}
-              users={users}
               currentUserId={currentUserId}
               loading={loading}
               loadingMore={loadingMore}

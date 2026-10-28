@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/marciojunior/wayposts/internal/auth"
+	"github.com/marciojunior/wayposts/internal/model"
 	"github.com/marciojunior/wayposts/internal/platform/httpapi"
 )
 
@@ -120,6 +122,42 @@ func (h *Handler) Followers(w http.ResponseWriter, r *http.Request) {
 		"followers":  followers,
 		"next_after": next,
 	})
+}
+
+// Users resolve o resumo de vários autores em uma chamada. A timeline usa para
+// hidratar a página.
+func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
+	raw := r.URL.Query().Get("ids")
+	if raw == "" {
+		httpapi.JSON(w, http.StatusOK, map[string]any{"items": []model.AuthorSummary{}})
+		return
+	}
+
+	parts := strings.Split(raw, ",")
+	if len(parts) > 200 {
+		httpapi.Error(w, http.StatusBadRequest, "too many ids")
+		return
+	}
+	ids := make([]int64, 0, len(parts))
+	for _, part := range parts {
+		id, err := strconv.ParseInt(strings.TrimSpace(part), 10, 64)
+		if err != nil || id <= 0 {
+			httpapi.Error(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+		ids = append(ids, id)
+	}
+
+	users, err := h.store.GetUsers(r.Context(), ids)
+	if err != nil {
+		// Com erro parcial, devolve o que o cache resolveu. Sem nada, responde 500.
+		h.log.Error("get users", "err", err)
+		if len(users) == 0 {
+			httpapi.Error(w, http.StatusInternalServerError, "internal error")
+			return
+		}
+	}
+	httpapi.JSON(w, http.StatusOK, map[string]any{"items": users})
 }
 
 func (h *Handler) FollowerCount(w http.ResponseWriter, r *http.Request) {

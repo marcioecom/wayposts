@@ -6,31 +6,44 @@ import (
 	"log/slog"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
-	postclient "github.com/marciojunior/wayposts/internal/clients/post"
 	"github.com/marciojunior/wayposts/internal/id"
 	"github.com/marciojunior/wayposts/internal/model"
 )
+
+// A busca de autores tem prazo curto para caber no p99 de 150ms da leitura.
+// Passado o prazo, os posts saem sem autor e o cliente usa o author_id.
+const authorLookupTimeout = 100 * time.Millisecond
 
 type Page struct {
 	Items      []model.Post `json:"items"`
 	NextCursor int64        `json:"next_cursor"`
 }
 
+type postGetter interface {
+	GetMany(ctx context.Context, ids []int64, viewerID int64) ([]model.Post, error)
+}
+
+type userGetter interface {
+	Users(ctx context.Context, ids []int64) ([]model.AuthorSummary, error)
+}
+
 type Service struct {
 	rdb       *redis.Client
-	posts     *postclient.Client
+	posts     postGetter
+	users     userGetter
 	maxCelebs int
 	log       *slog.Logger
 }
 
-func NewService(rdb *redis.Client, posts *postclient.Client, maxCelebs int, log *slog.Logger) *Service {
+func NewService(rdb *redis.Client, posts postGetter, users userGetter, maxCelebs int, log *slog.Logger) *Service {
 	if maxCelebs <= 0 {
 		maxCelebs = 100
 	}
-	return &Service{rdb: rdb, posts: posts, maxCelebs: maxCelebs, log: log}
+	return &Service{rdb: rdb, posts: posts, users: users, maxCelebs: maxCelebs, log: log}
 }
 
 func feedKey(userID int64) string {
@@ -204,5 +217,54 @@ func (s *Service) hydrate(ctx context.Context, viewerID, feedOwner int64, ids []
 			s.log.Warn("timeline lazy delete", "err", err)
 		}
 	}
+
+	// Uma única busca por página. Se o social falhar ou estourar o prazo, os
+	// posts continuam válidos e o cliente usa o author_id.
+	s.attachAuthors(ctx, out)
 	return out, nil
+}
+
+func (s *Service) attachAuthors(ctx context.Context, posts []model.Post) {
+	if len(posts) == 0 || s.users == nil {
+		return
+	}
+
+	seen := make(map[int64]struct{}, len(posts))
+	ids := make([]int64, 0, len(posts))
+	for _, p := range posts {
+		if p.AuthorID <= 0 {
+			continue
+		}
+		if _, ok := seen[p.AuthorID]; ok {
+			continue
+		}
+		seen[p.AuthorID] = struct{}{}
+		ids = append(ids, p.AuthorID)
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	lookupCtx, cancel := context.WithTimeout(ctx, authorLookupTimeout)
+	defer cancel()
+
+	authors, err := s.users.Users(lookupCtx, ids)
+	if err != nil {
+		s.log.Warn("timeline authors", "err", err)
+	}
+	if len(authors) == 0 {
+		return
+	}
+
+	byID := make(map[int64]model.AuthorSummary, len(authors))
+	for _, a := range authors {
+		byID[a.ID] = a
+	}
+	for i := range posts {
+		a, ok := byID[posts[i].AuthorID]
+		if !ok {
+			continue
+		}
+		posts[i].Author = &a
+	}
 }

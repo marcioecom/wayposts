@@ -156,6 +156,17 @@ apply não recria.
 
 ## 4. Smoke
 
+O Job do k6 roda em um worker dedicado, com a label `wayposts.io/loadgen=true` e a
+taint `wayposts.io/loadgen=true:NoSchedule`. Nada no repositório cria as duas, então em
+cluster novo aplique antes:
+
+```sh
+kubectl label node <worker> wayposts.io/loadgen=true
+kubectl taint node <worker> wayposts.io/loadgen=true:NoSchedule
+```
+
+Sem a label o Job fica Pending.
+
 De dentro do cluster, que é o caminho recomendado:
 
 ```sh
@@ -164,6 +175,9 @@ kubectl -n wayposts wait --for=condition=complete job/k6 --timeout=10m
 kubectl -n wayposts logs job/k6
 kubectl -n wayposts delete job k6
 ```
+
+O Job usa `imagePullPolicy: IfNotPresent` com a tag `dev`. Depois de reimportar a imagem
+no nó, delete e recrie o Job para não medir a versão antiga do cache local.
 
 Para iterar rápido pelo notebook, use port-forward. A latência inclui o Tailscale, então
 não use esses números no relatório:

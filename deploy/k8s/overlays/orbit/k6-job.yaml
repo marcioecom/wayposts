@@ -24,8 +24,15 @@ spec:
       restartPolicy: Never
       imagePullSecrets:
         - name: ghcr-pull-secret
+      # Nó dedicado ao gerador, fora do nó do stack. A label e a taint são
+      # criadas fora do repositório; ver deploy/k8s/README.md.
       nodeSelector:
-        topology.kubernetes.io/region: hel1
+        wayposts.io/loadgen: "true"
+      tolerations:
+        - key: wayposts.io/loadgen
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
       securityContext:
         runAsNonRoot: true
         runAsUser: 12345
@@ -35,7 +42,9 @@ spec:
       containers:
         - name: k6
           image: ghcr.io/marcioecom/wayposts-k6:dev
-          imagePullPolicy: Always
+          # A tag dev pode existir apenas no containerd do nó (import manual).
+          # Reimporte a imagem e recrie o Job para medir a versão nova.
+          imagePullPolicy: IfNotPresent
           args: ["run", "/load/steady.js"]
           env:
             - name: BASE
@@ -51,12 +60,14 @@ spec:
             - name: ENFORCE
               value: "1"
           resources:
+            # Em runs de 1.000+ VUs o k6 passa de 512Mi e o limite de 1 CPU
+            # vira o gargalo. O nó dedicado tem 4Gi de memória.
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 250m
+              memory: 256Mi
             limits:
-              cpu: "1"
-              memory: 512Mi
+              cpu: "2"
+              memory: 2Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

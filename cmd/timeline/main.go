@@ -12,6 +12,7 @@ import (
 
 	"github.com/marciojunior/wayposts/internal/auth"
 	postclient "github.com/marciojunior/wayposts/internal/clients/post"
+	socialclient "github.com/marciojunior/wayposts/internal/clients/social"
 	"github.com/marciojunior/wayposts/internal/platform/env"
 	"github.com/marciojunior/wayposts/internal/platform/httpapi"
 	"github.com/marciojunior/wayposts/internal/platform/metrics"
@@ -27,6 +28,7 @@ func main() {
 	addr := env.Get("TIMELINE_ADDR", ":8082")
 	redisAddr := env.Get("REDIS_ADDR", "localhost:6379")
 	postURL := env.Get("POST_PUBLIC_URL", "http://localhost:8081")
+	socialURL := env.Get("SOCIAL_PUBLIC_URL", "http://localhost:8083")
 
 	rdb, err := rds.New(redisAddr, "", 50)
 	if err != nil {
@@ -36,7 +38,8 @@ func main() {
 	defer rdb.Close()
 
 	posts := postclient.New(postURL)
-	svc := timeline.NewService(rdb, posts, env.Int("MAX_CELEBS", 100), log)
+	users := socialclient.New(socialURL)
+	svc := timeline.NewService(rdb, posts, users, env.Int("MAX_CELEBS", 100), log)
 	handler := timeline.NewHandler(svc, log)
 	m := metrics.New("timeline")
 

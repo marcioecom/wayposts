@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/marciojunior/wayposts/internal/model"
 )
 
 type Client struct {
@@ -45,6 +48,27 @@ func (c *Client) Followers(ctx context.Context, authorID, after int64, limit int
 		return nil, err
 	}
 	return out.Followers, nil
+}
+
+// Users busca o resumo de vários autores em uma chamada.
+func (c *Client) Users(ctx context.Context, ids []int64) ([]model.AuthorSummary, error) {
+	if len(ids) == 0 {
+		return []model.AuthorSummary{}, nil
+	}
+	parts := make([]string, len(ids))
+	for i, id := range ids {
+		parts[i] = strconv.FormatInt(id, 10)
+	}
+	q := url.Values{}
+	q.Set("ids", strings.Join(parts, ","))
+
+	var out struct {
+		Items []model.AuthorSummary `json:"items"`
+	}
+	if err := c.get(ctx, "/internal/users?"+q.Encode(), &out); err != nil {
+		return nil, err
+	}
+	return out.Items, nil
 }
 
 func (c *Client) get(ctx context.Context, path string, out any) error {
