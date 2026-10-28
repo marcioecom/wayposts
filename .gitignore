@@ -3,7 +3,6 @@ bin/
 .env
 .env.local
 .DS_Store
-load/results/
 web/node_modules/
 web/dist/
 web/.wrangler/
